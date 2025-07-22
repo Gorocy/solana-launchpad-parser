@@ -16,7 +16,7 @@ use crate::config::error::Result;
 
 pub async fn config_grpc() -> Result<(GeyserConfig, Config)> {
     info!("Config GRPC");
-    debug!("CONFIG_PATH from env");
+    debug!("Getting CONFIG_PATH from env");
     let config_path = env::var("CONFIG_PATH")?;
 
     debug!("Reading config file");
@@ -25,13 +25,13 @@ pub async fn config_grpc() -> Result<(GeyserConfig, Config)> {
     debug!("Parsing config file");
     let config: Config = serde_jsonc::from_str(&config_content)?;
 
-    debug!("GRPC_ENDPOINT from env");
+    debug!("Getting GRPC_ENDPOINT from env");
     let grpc_endpoint = env::var("GRPC_ENDPOINT")?;
 
-    debug!("X_TOKEN from env");
+    debug!("Getting X_TOKEN from env");
     let x_token = env::var("X_TOKEN")?;
 
-    debug!("SOLANA_RPC_ENDPOINT from env");
+    debug!("Getting SOLANA_RPC_ENDPOINT from env");
     let rpc_endpoint = env::var("SOLANA_RPC_ENDPOINT")?;
 
     let geyser_config = GeyserConfig {
@@ -45,14 +45,14 @@ pub async fn config_grpc() -> Result<(GeyserConfig, Config)> {
     Ok((geyser_config, config))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct GeyserConfig {
     pub grpc_endpoint: String,
     pub x_token: String,
     pub rpc_endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub commitment: Option<String>,
     pub transactions: HashMap<String, TransactionFilter>,
@@ -63,7 +63,7 @@ pub struct Config {
     pub entry: HashMap<String, EntryFilter>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct TransactionFilter {
     pub account_include: Option<Vec<String>>,
     pub account_exclude: Option<Vec<String>>,
@@ -86,7 +86,7 @@ impl From<&TransactionFilter> for GeyserSubscribeRequestFilterTransactions {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct AccountFilter {
     pub account: Option<Vec<String>>,
     pub owner: Option<Vec<String>>,
@@ -146,7 +146,7 @@ impl From<&AccountFilter> for GeyserSubscribeRequestFilterAccounts {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct AccountSubFilter {
     pub memcmp: Option<Memcmp>,
     pub datasize: Option<u64>,
@@ -154,19 +154,19 @@ pub struct AccountSubFilter {
     pub lamports: Option<Lamports>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Memcmp {
     pub offset: usize,
     pub data: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Lamports {
     pub cmp: String,
     pub value: u64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct SlotFilter {
     pub filter_by_commitment: Option<bool>,
     pub interslot_updates: Option<bool>,
@@ -181,7 +181,7 @@ impl From<&SlotFilter> for GeyserSubscribeRequestFilterSlots {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct BlockFilter {
     pub account_include: Option<Vec<String>>,
     pub include_transactions: Option<bool>,
@@ -200,7 +200,7 @@ impl From<&BlockFilter> for GeyserSubscribeRequestFilterBlocks {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct BlockMetaFilter {}
 
 impl From<&BlockMetaFilter> for GeyserSubscribeRequestFilterBlocksMeta {
@@ -209,7 +209,7 @@ impl From<&BlockMetaFilter> for GeyserSubscribeRequestFilterBlocksMeta {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct EntryFilter {}
 
 impl From<&EntryFilter> for GeyserSubscribeRequestFilterEntry {

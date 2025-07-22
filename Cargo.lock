@@ -4995,12 +4995,17 @@ dependencies = [
 name = "task_ba"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "bs58",
+ "chrono",
  "dotenv",
+ "futures",
  "serde",
  "serde_jsonc",
  "solana-stream-sdk",
  "thiserror 2.0.12",
  "tokio",
+ "tonic",
  "tracing",
  "tracing-log",
  "tracing-subscriber",
