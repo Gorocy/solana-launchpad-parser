@@ -1,15 +1,22 @@
 pub mod error;
+pub mod grpc;
+
 use tracing::{debug, error, info, trace, warn};
 use tracing_subscriber;
 
-use crate::config::error::Result;
+use crate::config::{
+    error::Result,
+    grpc::{Config, GeyserConfig, config_grpc},
+};
 use dotenv::dotenv;
 
-pub fn init() -> Result<()> {
+pub async fn init() -> Result<(GeyserConfig, Config)> {
     dotenv().ok();
 
+    let result = config_grpc();
+
     tracing_subscriber::fmt::init();
-    tracing_log::LogTracer::init()?;
+    // tracing_log::LogTracer::init()?;
 
     // mock for testing purposes
     info!("Starting task-ba");
@@ -18,5 +25,5 @@ pub fn init() -> Result<()> {
     warn!("Warn message");
     trace!("Trace message");
 
-    Ok(())
+    result.await
 }

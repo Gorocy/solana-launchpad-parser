@@ -7,4 +7,13 @@ pub type Result<T> = std::result::Result<T, ErrorConfig>;
 pub enum ErrorConfig {
     #[error(transparent)]
     TracingLog(#[from] SetLoggerError),
+
+    #[error(transparent)]
+    VarError(#[from] std::env::VarError),
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
+    #[error(transparent)]
+    SerdeJsoncError(#[from] serde_jsonc::Error),
 }
