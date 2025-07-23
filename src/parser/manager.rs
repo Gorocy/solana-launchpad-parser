@@ -1,5 +1,6 @@
 use crate::geyser::{QueuedTransaction, TransactionQueue};
 use crate::parser::{LaunchpadParser, ParseResult, TokenLaunch};
+use crate::rabbitmq::RabbitMQProducer;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::time::{Duration, sleep};
@@ -8,10 +9,11 @@ use tracing::{error, info, trace, warn};
 pub struct ParserManager {
     parsers: Vec<Box<dyn LaunchpadParser + Send + Sync>>,
     program_id_to_parser: HashMap<String, usize>,
+    rabbit_producer: Option<Arc<RabbitMQProducer>>,
 }
 
 impl ParserManager {
-    pub fn new() -> Self {
+    pub fn new(rabbit_producer: Option<Arc<RabbitMQProducer>>) -> Self {
         let mut parsers: Vec<Box<dyn LaunchpadParser + Send + Sync>> = Vec::new();
         let mut program_id_to_parser = HashMap::new();
 
@@ -34,6 +36,7 @@ impl ParserManager {
         Self {
             parsers,
             program_id_to_parser,
+            rabbit_producer,
         }
     }
 
@@ -134,6 +137,13 @@ impl ParserManager {
         }
         info!("Verify: https://solscan.io/tx/{}", launch.signature);
         info!("===================");
+
+        // Publish to RabbitMQ, if producer is available
+        if let Some(producer) = &self.rabbit_producer {
+            if let Err(e) = producer.publish_token_launch(&launch).await {
+                warn!("Failed to publish token launch to RabbitMQ: {}", e);
+            }
+        }
 
         Ok(())
     }

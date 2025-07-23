@@ -1,20 +1,20 @@
 pub mod error;
 pub mod grpc;
+pub mod rabbit;
 
 use tracing::{debug, error, info, trace, warn};
 use tracing_subscriber;
 
 use crate::config::{
-    error::Result,
-    grpc::{Config, GeyserConfig, config_grpc},
+    rabbit::RabbitMQConfig, error::Result, grpc::{config_grpc, Config, GeyserConfig}
 };
 use dotenv::dotenv;
 
-pub async fn init() -> Result<(GeyserConfig, Config)> {
+pub async fn init() -> Result<((GeyserConfig, Config), RabbitMQConfig)> {
     dotenv().ok();
 
     let result = config_grpc();
-
+    let rabbitmq_config = rabbit::RabbitMQConfig::from_env();
     tracing_subscriber::fmt::init();
     // tracing_log::LogTracer::init()?;
 
@@ -25,5 +25,5 @@ pub async fn init() -> Result<(GeyserConfig, Config)> {
     warn!("Warn message");
     trace!("Trace message");
 
-    result.await
+    Ok((result.await?, rabbitmq_config.await?))
 }

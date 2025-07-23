@@ -1,13 +1,14 @@
 use crate::geyser::QueuedTransaction;
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum LaunchpadType {
     Pumpfun,
     Meteora,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TokenLaunch {
     pub launchpad: LaunchpadType,
     pub token_address: String,
@@ -18,7 +19,7 @@ pub struct TokenLaunch {
     pub metadata: LaunchMetadata,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LaunchMetadata {
     pub name: Option<String>,
     pub symbol: Option<String>,

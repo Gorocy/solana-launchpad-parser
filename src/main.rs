@@ -3,12 +3,23 @@ use task_ba::config;
 use task_ba::error::Result;
 use task_ba::geyser::GeyserClient;
 use task_ba::parser::ParserManager;
+use task_ba::rabbitmq::{RabbitMQProducer};
+use rustls::crypto::{CryptoProvider, ring::default_provider};
 use tokio::time::{Duration, sleep};
-use tracing::{debug, info, warn};
+use tracing::{debug, error, info, warn};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let (geyser_config, config) = config::init().await?;
+    // Install the default Rustls crypto provider (ring) before any TLS/crypto operations
+    _ = CryptoProvider::install_default(default_provider());
+    let ((geyser_config, config), rabbitmq_cfg) = config::init().await?;
+
+    // Initialize RabbitMQ producer
+    let mut producer = RabbitMQProducer::new(rabbitmq_cfg);
+    if let Err(e) = producer.init().await {
+        error!("Failed to initialize RabbitMQ producer: {e}");
+    }
+    let producer = Arc::new(producer);
 
     debug!("geyser_config: {:?}", geyser_config);
     debug!("config: {:?}", config);
@@ -20,7 +31,7 @@ async fn main() -> Result<()> {
     let _geyser_handle = geyser_client.start();
 
     // Create parser manager (parsers are automatically registered)
-    let parser_manager = ParserManager::new();
+    let parser_manager = ParserManager::new(Some(producer));
 
     info!("Parser manager initialized with all launchpad parsers");
 
@@ -28,7 +39,7 @@ async fn main() -> Result<()> {
     let queue = geyser_client.get_queue().clone();
     let _parser_handle = tokio::spawn(async move {
         parser_manager
-            .start_processing(Arc::new(queue.clone()))
+            .start_processing(Arc::new(queue))
             .await;
     });
 
