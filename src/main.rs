@@ -1,44 +1,39 @@
+use std::sync::Arc;
 use task_ba::config;
 use task_ba::error::Result;
 use task_ba::geyser::GeyserClient;
-use tracing::{info, warn};
-use tokio::time::{sleep, Duration};
+use task_ba::parser::ParserManager;
+use tokio::time::{Duration, sleep};
+use tracing::{debug, info, warn};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let (geyser_config, config) = config::init().await?;
 
-    info!("geyser_config: {:?}", geyser_config);
-    info!("config: {:?}", config);
+    debug!("geyser_config: {:?}", geyser_config);
+    debug!("config: {:?}", config);
 
     // Create Geyser client with queue size of 5000 transactions (increased for performance)
     let geyser_client = GeyserClient::new(geyser_config, config, 5000);
-    
+
     // Start client in background
     let _geyser_handle = geyser_client.start();
-    
-    // Start queue monitoring thread with batch processing
+
+    // Create parser manager (parsers are automatically registered)
+    let parser_manager = ParserManager::new();
+
+    info!("Parser manager initialized with all launchpad parsers");
+
+    // Start parser manager processing
     let queue = geyser_client.get_queue().clone();
-    let _queue_handle = tokio::spawn(async move {
-        info!("Starting queue monitoring thread...");
-        
-        loop {
-            sleep(Duration::from_millis(100)).await; // Much faster processing
-            
-            // Process transactions in batches for better performance
-            let transactions = queue.pop_batch(10).await;
-            if !transactions.is_empty() {
-                info!("[QUEUE] Processing batch of {} transactions", transactions.len());
-                for transaction in transactions {
-                    info!("Processing: {} (slot: {}, accounts: {})", 
-                          transaction.signature, 
-                          transaction.slot,
-                          transaction.accounts.len());
-                }
-            }
-        }
+    let _parser_handle = tokio::spawn(async move {
+        parser_manager
+            .start_processing(Arc::new(queue.clone()))
+            .await;
     });
-    
+
+    info!("Parser manager started successfully");
+
     // Main application loop with reduced logging frequency
     let main_queue = geyser_client.get_queue().clone();
     loop {

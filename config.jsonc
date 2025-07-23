@@ -4,26 +4,24 @@
   // - "Confirmed" (medium finality)
   // - "Finalized" (highest finality, slowest)
   "commitment": "Processed",
-
   "transactions": {
     "pumpfun": {
       // Include transactions that involve any of these accounts.
-      "account_include": ["6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"],
-
+      "account_include": [
+        "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj",
+        "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P",
+        "cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG",
+        "dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN"
+      ],
       // Exclude transactions that involve any of these accounts.
       "account_exclude": [],
-
       // Only include transactions if all these accounts are present.
       "account_required": [],
-
       // (optional filters below, uncomment if needed)
-
       // Filter only vote transactions.
       "vote": false,
-
       // Filter only failed transactions.
       "failed": false
-
       // Filter by specific transaction signature (base58).
       // "signature": "YourTxnSignatureBase58Here"
     }

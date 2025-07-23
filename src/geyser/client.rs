@@ -11,7 +11,7 @@ use tonic::transport::ClientTlsConfig;
 use tracing::{error, info, warn};
 
 use crate::config::grpc::{Config, GeyserConfig, commitment_from_str};
-use crate::geyser::{QueuedTransaction, TransactionQueue};
+use crate::geyser::queue::{QueuedTransaction, TransactionInstruction, TransactionQueue};
 
 /// Main Geyser client
 pub struct GeyserClient {
@@ -103,11 +103,25 @@ impl GeyserClient {
 
                             // Collect all accounts from transaction
                             let mut accounts = Vec::new();
+                            let mut instructions = Vec::new();
 
-                            // Add accounts from account_keys
+                            // Add accounts from account_keys and extract instructions
                             if let Some(message) = &inner_tx.message {
                                 for account_key in &message.account_keys {
                                     accounts.push(bs58::encode(account_key).into_string());
+                                }
+
+                                // Extract instruction data
+                                for instruction in &message.instructions {
+                                    let program_id_index = instruction.program_id_index as usize;
+                                    if program_id_index < accounts.len() {
+                                        let tx_instruction = TransactionInstruction {
+                                            program_id: accounts[program_id_index].clone(),
+                                            accounts: instruction.accounts.clone(),
+                                            data: instruction.data.clone(),
+                                        };
+                                        instructions.push(tx_instruction);
+                                    }
                                 }
                             }
 
@@ -120,6 +134,7 @@ impl GeyserClient {
                                     slot,
                                     received_time,
                                     accounts,
+                                    instructions,
                                 };
 
                                 self.transaction_queue.push(queued_tx).await;

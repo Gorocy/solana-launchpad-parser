@@ -11,6 +11,15 @@ pub struct QueuedTransaction {
     pub slot: u64,
     pub received_time: DateTime<Utc>,
     pub accounts: Vec<String>,
+    pub instructions: Vec<TransactionInstruction>,
+}
+
+/// Instruction data from transaction
+#[derive(Clone, Debug)]
+pub struct TransactionInstruction {
+    pub program_id: String,
+    pub accounts: Vec<u8>, // Account indices
+    pub data: Vec<u8>,     // Instruction data
 }
 
 /// Thread-safe queue for transactions
@@ -67,10 +76,19 @@ impl TransactionQueue {
         queue.drain(..).collect()
     }
 
-    /// Pops multiple transactions at once (batch processing)
+    /// Gets a batch of transactions from queue (up to max_count)
     pub async fn pop_batch(&self, max_count: usize) -> Vec<QueuedTransaction> {
         let mut queue = self.queue.lock().await;
-        let count = std::cmp::min(max_count, queue.len());
-        queue.drain(..count).collect()
+        let mut batch = Vec::new();
+        
+        for _ in 0..max_count {
+            if let Some(transaction) = queue.pop_front() {
+                batch.push(transaction);
+            } else {
+                break;
+            }
+        }
+        
+        batch
     }
 }
