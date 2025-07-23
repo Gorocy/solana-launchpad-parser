@@ -6,7 +6,9 @@ use tracing::{debug, error, info, trace, warn};
 use tracing_subscriber;
 
 use crate::config::{
-    rabbit::RabbitMQConfig, error::Result, grpc::{config_grpc, Config, GeyserConfig}
+    error::Result,
+    grpc::{Config, GeyserConfig, config_grpc},
+    rabbit::RabbitMQConfig,
 };
 use dotenv::dotenv;
 

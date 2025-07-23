@@ -1,12 +1,14 @@
+use rustls::crypto::{CryptoProvider, ring::default_provider};
 use std::sync::Arc;
 use task_ba::config;
 use task_ba::error::Result;
 use task_ba::geyser::GeyserClient;
 use task_ba::parser::ParserManager;
-use task_ba::rabbitmq::{RabbitMQProducer};
-use rustls::crypto::{CryptoProvider, ring::default_provider};
+use task_ba::rabbitmq::RabbitMQProducer;
 use tokio::time::{Duration, sleep};
 use tracing::{debug, error, info, warn};
+
+const QUEUE_SIZE: usize = 5000;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -24,8 +26,8 @@ async fn main() -> Result<()> {
     debug!("geyser_config: {:?}", geyser_config);
     debug!("config: {:?}", config);
 
-    // Create Geyser client with queue size of 5000 transactions (increased for performance)
-    let geyser_client = GeyserClient::new(geyser_config, config, 5000);
+    // Create Geyser client with queue size
+    let geyser_client = GeyserClient::new(geyser_config, config, QUEUE_SIZE);
 
     // Start client in background
     let _geyser_handle = geyser_client.start();
@@ -38,9 +40,7 @@ async fn main() -> Result<()> {
     // Start parser manager processing
     let queue = geyser_client.get_queue().clone();
     let _parser_handle = tokio::spawn(async move {
-        parser_manager
-            .start_processing(Arc::new(queue))
-            .await;
+        parser_manager.start_processing(Arc::new(queue)).await;
     });
 
     info!("Parser manager started successfully");
@@ -50,7 +50,7 @@ async fn main() -> Result<()> {
     loop {
         sleep(Duration::from_secs(10)).await;
         let queue_size = main_queue.len().await;
-        if queue_size > 1000 {
+        if queue_size > QUEUE_SIZE / 2 {
             warn!("Queue status: {} elements", queue_size);
         } else if queue_size > 0 {
             info!("Queue status: {} elements", queue_size);

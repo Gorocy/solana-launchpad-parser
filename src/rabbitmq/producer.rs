@@ -1,18 +1,16 @@
 use anyhow::{Context, Result};
 use lapin::{
-    options::{
-        BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions,
-    },
-    types::FieldTable,
     BasicProperties, Channel, Connection, ConnectionProperties, ExchangeKind,
+    options::{BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions},
+    types::FieldTable,
 };
 use serde_json;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{debug, info, warn};
 
-use crate::parser::TokenLaunch;
 use crate::config::rabbit::RabbitMQConfig;
+use crate::parser::TokenLaunch;
 
 #[derive(Clone)]
 pub struct RabbitMQProducer {
@@ -110,7 +108,8 @@ impl RabbitMQProducer {
             let channel = channel_arc.lock().await;
 
             // Serialize token launch to JSON
-            let payload = serde_json::to_vec(token_launch).context("Failed to serialize token launch")?;
+            let payload =
+                serde_json::to_vec(token_launch).context("Failed to serialize token launch")?;
 
             // Publish message
             channel
@@ -165,4 +164,4 @@ impl RabbitMQProducer {
         }
         Ok(())
     }
-} 
+}

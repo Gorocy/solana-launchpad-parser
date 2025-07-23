@@ -1,17 +1,18 @@
 use anyhow::{Context, Result};
 use futures::StreamExt;
 use lapin::{
+    Channel, Connection, ConnectionProperties, Consumer, ExchangeKind,
     options::{
-        BasicAckOptions, BasicConsumeOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions,
+        BasicAckOptions, BasicConsumeOptions, ExchangeDeclareOptions, QueueBindOptions,
+        QueueDeclareOptions,
     },
     types::FieldTable,
-    Channel, Connection, ConnectionProperties, Consumer, ExchangeKind,
 };
 use std::sync::Arc;
 use tracing::{debug, error, info, warn};
 
-use crate::parser::TokenLaunch;
 use crate::config::rabbit::RabbitMQConfig;
+use crate::parser::TokenLaunch;
 
 pub struct RabbitMQConsumer {
     config: RabbitMQConfig,
@@ -115,7 +116,10 @@ impl RabbitMQConsumer {
                 .await
                 .context("Failed to create consumer")?;
 
-            info!("🔍 Started consuming from queue: {}", self.config.queue_name);
+            info!(
+                "🔍 Started consuming from queue: {}",
+                self.config.queue_name
+            );
 
             let handle = tokio::spawn(async move { Self::consume_messages(consumer).await });
 
@@ -209,4 +213,4 @@ impl RabbitMQConsumer {
         }
         Ok(())
     }
-} 
+}

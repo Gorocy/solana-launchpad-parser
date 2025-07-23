@@ -2,7 +2,7 @@ use anyhow::Result;
 use rustls::crypto::{CryptoProvider, ring::default_provider};
 use task_ba::config::rabbit::RabbitMQConfig;
 use task_ba::rabbitmq::RabbitMQConsumer;
-use tracing::{info};
+use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -12,7 +12,10 @@ async fn main() -> Result<()> {
 
     // Load RabbitMQ configuration from env vars (with defaults)
     let cfg = RabbitMQConfig::from_env().await?;
-    info!("Starting standalone RabbitMQ consumer with config: {:?}", cfg);
+    info!(
+        "Starting standalone RabbitMQ consumer with config: {:?}",
+        cfg
+    );
 
     let mut consumer = RabbitMQConsumer::new(cfg);
     consumer.init().await?;
@@ -32,4 +35,4 @@ async fn main() -> Result<()> {
 
     info!("Consumer stopped. Goodbye!");
     Ok(())
-} 
+}

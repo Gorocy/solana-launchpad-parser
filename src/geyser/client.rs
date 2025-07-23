@@ -179,7 +179,6 @@ impl GeyserClient {
 
     /// Starts Geyser client in separate task
     pub fn start(&self) -> JoinHandle<Result<()>> {
-
         let client = self.clone();
 
         tokio::spawn(async move {
@@ -198,15 +197,16 @@ impl GeyserClient {
     }
 
     /// Main loop for handling Geyser stream
-    async fn run_stream_loop(
-        &self,
-        request: GeyserSubscribeRequest,
-    ) -> Result<()> {
+    async fn run_stream_loop(&self, request: GeyserSubscribeRequest) -> Result<()> {
         // Connect to Geyser GRPC
-        info!("Connecting to Geyser GRPC: {}", self.geyser_config.grpc_endpoint);
+        info!(
+            "Connecting to Geyser GRPC: {}",
+            self.geyser_config.grpc_endpoint
+        );
 
-        let mut builder = GeyserGrpcClient::build_from_shared(self.geyser_config.grpc_endpoint.clone())
-            .context("Failed to build GRPC client")?;
+        let mut builder =
+            GeyserGrpcClient::build_from_shared(self.geyser_config.grpc_endpoint.clone())
+                .context("Failed to build GRPC client")?;
 
         builder = builder
             .x_token(Some(self.geyser_config.x_token.clone()))
@@ -236,9 +236,7 @@ impl GeyserClient {
         while let Some(message) = stream.next().await {
             match message {
                 Ok(msg) => {
-
                     self.process_message(&msg).await;
-
                 }
                 Err(e) => {
                     error!("Stream error: {:?}, reconnecting...", e);

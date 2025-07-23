@@ -1,5 +1,5 @@
-use std::env;
 use crate::config::error::Result;
+use std::env;
 use tracing::{debug, info};
 
 #[derive(Debug, Clone)]
@@ -20,16 +20,16 @@ impl RabbitMQConfig {
             .unwrap_or_else(|_| "amqp://guest:guest@localhost:5672".to_string());
 
         debug!("Getting RABBITMQ_EXCHANGE from env");
-        let exchange_name = env::var("RABBITMQ_EXCHANGE")
-            .unwrap_or_else(|_| "token_launches".to_string());
+        let exchange_name =
+            env::var("RABBITMQ_EXCHANGE").unwrap_or_else(|_| "token_launches".to_string());
 
         debug!("Getting RABBITMQ_QUEUE from env");
-        let queue_name = env::var("RABBITMQ_QUEUE")
-            .unwrap_or_else(|_| "launches_queue".to_string());
+        let queue_name =
+            env::var("RABBITMQ_QUEUE").unwrap_or_else(|_| "launches_queue".to_string());
 
         debug!("Getting RABBITMQ_ROUTING_KEY from env");
-        let routing_key = env::var("RABBITMQ_ROUTING_KEY")
-            .unwrap_or_else(|_| "launch.detected".to_string());
+        let routing_key =
+            env::var("RABBITMQ_ROUTING_KEY").unwrap_or_else(|_| "launch.detected".to_string());
 
         Ok(Self {
             url,
@@ -38,4 +38,4 @@ impl RabbitMQConfig {
             routing_key,
         })
     }
-} 
+}

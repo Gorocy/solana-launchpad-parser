@@ -80,7 +80,7 @@ impl TransactionQueue {
     pub async fn pop_batch(&self, max_count: usize) -> Vec<QueuedTransaction> {
         let mut queue = self.queue.lock().await;
         let mut batch = Vec::new();
-        
+
         for _ in 0..max_count {
             if let Some(transaction) = queue.pop_front() {
                 batch.push(transaction);
@@ -88,7 +88,7 @@ impl TransactionQueue {
                 break;
             }
         }
-        
+
         batch
     }
 }
