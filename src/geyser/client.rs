@@ -14,6 +14,7 @@ use crate::config::grpc::{Config, GeyserConfig, commitment_from_str};
 use crate::geyser::queue::{QueuedTransaction, TransactionInstruction, TransactionQueue};
 
 /// Main Geyser client
+#[derive(Clone)]
 pub struct GeyserClient {
     geyser_config: GeyserConfig,
     config: Config,
@@ -178,19 +179,17 @@ impl GeyserClient {
 
     /// Starts Geyser client in separate task
     pub fn start(&self) -> JoinHandle<Result<()>> {
-        let geyser_config = self.geyser_config.clone();
-        let request = self.build_subscribe_request();
-        let transaction_queue = self.transaction_queue.clone();
-        let config = self.config.clone();
+
+        let client = self.clone();
 
         tokio::spawn(async move {
             info!("Starting Geyser client...");
 
             loop {
-                if let Err(e) =
-                    Self::run_stream_loop(&geyser_config, &request, &transaction_queue, &config)
-                        .await
-                {
+                // Build a fresh request each reconnect to avoid ownership issues
+                let request = client.build_subscribe_request();
+
+                if let Err(e) = client.run_stream_loop(request).await {
                     error!("Error in Geyser stream: {:?}", e);
                     tokio::time::sleep(Duration::from_secs(5)).await;
                 }
@@ -200,22 +199,20 @@ impl GeyserClient {
 
     /// Main loop for handling Geyser stream
     async fn run_stream_loop(
-        geyser_config: &GeyserConfig,
-        request: &GeyserSubscribeRequest,
-        transaction_queue: &TransactionQueue,
-        config: &Config,
+        &self,
+        request: GeyserSubscribeRequest,
     ) -> Result<()> {
         // Connect to Geyser GRPC
-        info!("Connecting to Geyser GRPC: {}", geyser_config.grpc_endpoint);
+        info!("Connecting to Geyser GRPC: {}", self.geyser_config.grpc_endpoint);
 
-        let mut builder = GeyserGrpcClient::build_from_shared(geyser_config.grpc_endpoint.clone())
+        let mut builder = GeyserGrpcClient::build_from_shared(self.geyser_config.grpc_endpoint.clone())
             .context("Failed to build GRPC client")?;
 
         builder = builder
-            .x_token(Some(geyser_config.x_token.clone()))
+            .x_token(Some(self.geyser_config.x_token.clone()))
             .context("Failed to set token")?;
 
-        if geyser_config.grpc_endpoint.starts_with("https://") {
+        if self.geyser_config.grpc_endpoint.starts_with("https://") {
             builder = builder
                 .tls_config(ClientTlsConfig::new().with_native_roots())
                 .context("Failed to configure TLS")?;
@@ -239,14 +236,9 @@ impl GeyserClient {
         while let Some(message) = stream.next().await {
             match message {
                 Ok(msg) => {
-                    // Create temporary client for message processing
-                    let temp_client = GeyserClient {
-                        geyser_config: geyser_config.clone(),
-                        config: config.clone(),
-                        transaction_queue: transaction_queue.clone(),
-                    };
 
-                    temp_client.process_message(&msg).await;
+                    self.process_message(&msg).await;
+
                 }
                 Err(e) => {
                     error!("Stream error: {:?}, reconnecting...", e);
